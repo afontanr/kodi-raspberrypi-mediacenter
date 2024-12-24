@@ -347,6 +347,8 @@ docker run -d \
    - Set the root folder to `/media/tv` (this is the path where your TV series will be stored).
    - Save the configuration.
 
+---
+
 ### Radarr
 
 #### Step 1: Access Radarr
@@ -368,7 +370,8 @@ docker run -d \
    - Click **Add Root Folder**.
    - Set the root folder to `/media/movies` (this is the path where your movies will be stored).
    - Save the configuration.
-  
+
+---
 
 ### qBittorrent
 
@@ -411,6 +414,8 @@ docker run -d \
      - Set the save path to /downloads/tv-sonarr.
 3. Click Apply to save the categories.
 
+---
+
 ### Jackett
 
 #### Step 1: Access the Jackett Web UI
@@ -419,14 +424,10 @@ docker run -d \
    Example: `http://192.168.1.100:9117`.
 2. Once loaded, you should see the Jackett dashboard.
 
----
-
 #### Step 2: Add an Indexer
 1. On the Jackett dashboard, click the **Add Indexer** button.
 2. Use the search bar to find your preferred tracker or indexer.
 3. Click the **+** (plus) button next to the tracker you want to add.
-
----
 
 #### Step 3: Configure the Indexer
 1. After clicking the **+** button:
@@ -434,19 +435,194 @@ docker run -d \
    - Save the configuration.
 2. Once added, the indexer should appear in the list of active indexers.
 
----
-
 #### Step 4: Test the Indexer
 1. On the Jackett dashboard, find your newly added indexer.
 2. Click the **Test** button next to it to ensure it’s working correctly.
 3. If the test is successful, the indexer is ready for use.
-
---
 
 #### Step 5: Save and Exit
 1. After confirming everything works, close the Jackett web UI or leave it running in the background.
 2. Your Jackett configuration is now complete, and it’s ready to be linked with Radarr and Sonarr.
 
 This completes the initial setup.
+
+---
+
+## Connecting Sonarr and Radarr with qBittorrent and Jackett
+
+In this section, we will configure Sonarr and Radarr to connect with qBittorrent for downloading content and with Jackett for accessing indexers.
+
+
+### **1. Adding qBittorrent to Sonarr and Radarr**
+
+1. **Open Sonarr and Radarr** in your browser.
+   - Sonarr: `http://<your_raspberry_pi_IP>:8989`
+   - Radarr: `http://<your_raspberry_pi_IP>:7878`
+
+2. **Navigate to the Download Client settings:**
+   - In Sonarr or Radarr, go to **Settings > Download Clients**.
+   - Click on the **+** button to add a new download client.
+
+3. **Configure qBittorrent:**
+   - Select **qBittorrent** from the list.
+   - Fill out the form with the following details:
+     - **Host:** `qbittorrent`
+     - **Port:** `8080`
+     - **Username:** (your qBittorrent username)
+     - **Password:** (your qBittorrent password)
+   - Click **Test** to ensure the connection works.
+   - Click **Save**.
+
+---
+
+### **2. Adding Jackett Indexers to Sonarr and Radarr**
+
+#### **Step 1: Get the Indexer URL and API Key from Jackett**
+1. **Access Jackett:**
+   - Open Jackett in your browser: `http://<your_raspberry_pi_IP>:9117`.
+
+2. **Copy the Torznab Feed URL:**
+   - Find an indexer you have added in Jackett and click **Copy Torznab Feed**.
+   - The copied URL will look like this:
+     ```
+     http://<your_raspberry_pi_IP>:9117/api/v2.0/indexers/<indexer_name>/results/torznab/
+     ```
+   - Replace `<your_raspberry_pi_IP>` with `jackett` to take advantage of the Docker network:
+     ```
+     http://jackett:9117/api/v2.0/indexers/<indexer_name>/results/torznab/
+     ```
+
+3. **Get the API Key:**
+   - In Jackett, go to **API Key** in the top-right corner of the interface.
+   - Copy the key for use in Sonarr and Radarr.
+
+#### **Step 2: Add the Indexer to Sonarr and Radarr**
+1. **Open Sonarr or Radarr** and go to **Settings > Indexers**.
+2. **Add a New Indexer:**
+   - Click **+** and select **Torznab**.
+3. **Configure the Torznab Indexer:**
+   - **Name:** Enter a friendly name for the indexer.
+   - **URL:** Paste the Torznab Feed URL (modified to use `jackett` instead of the IP address).
+   - **API Key:** Paste the API Key copied from Jackett.
+   - **Categories:**
+     - For **Sonarr**, use the category: `5000, 5070`.
+     - For **Radarr**, use the category: `2000, 2010`.
+   - Click **Test** to ensure the connection works.
+   - Click **Save**.
+
+---
+
+### **3. Testing the Setup**
+
+1. **Search for Titles:**
+   - In Sonarr or Radarr, go to **Add New Series** or **Add New Movie**.
+   - Search for a title and add it to your library.
+
+2. **Verify Download Client Integration:**
+   - When a title is searched, Sonarr or Radarr will use the Jackett indexer to find torrents and send them to qBittorrent.
+
+3. **Check qBittorrent:**
+   - Open qBittorrent and verify that the download appears under the correct category:
+     - **TV-Sonarr**: Downloads TV series.
+     - **Movies-Radarr**: Downloads movies.
+
+---
+
+## **Configuring Kodi for Movies and TV Shows**
+
+Follow these steps to configure Kodi to read from your media folders and download metadata for movies and TV shows:
+
+
+#### **1. Set Up the Movies Section**
+
+1. **Open Kodi** and navigate to:
+   - **Settings (Gear Icon) > Media Settings > Library**.
+2. Select **Videos**, then click **Add Videos...**.
+3. In the dialog box that appears:
+   - **Browse** to the folder where your movies are stored: `/media/movies`.
+   - Click **OK** to confirm.
+4. Enter a name for this source, e.g., `Movies`, and click **OK**.
+5. In the next screen:
+   - Select **This directory contains: Movies**.
+   - Choose a scraper for metadata (e.g., **The Movie Database**).
+   - Click **OK**.
+6. In the confirmation prompt, select **Yes** to scan the folder and download metadata for your movies.
+
+---
+
+#### **2. Set Up the TV Shows Section**
+
+1. Go back to **Settings > Media Settings > Library**.
+2. Select **Videos**, then click **Add Videos...**.
+3. In the dialog box that appears:
+   - **Browse** to the folder where your TV shows are stored: `/media/tv`.
+   - Click **OK** to confirm.
+4. Enter a name for this source, e.g., `TV Shows`, and click **OK**.
+5. In the next screen:
+   - Select **This directory contains: TV Shows**.
+   - Choose a scraper for metadata (e.g., **The TVDB** or **The Movie Database**).
+   - Click **OK**.
+6. In the confirmation prompt, select **Yes** to scan the folder and download metadata for your TV shows.
+
+---
+
+#### **3. Enable Automatic Updates for New Content**
+
+1. Go to **Settings > Media Settings > Library**.
+2. Under **Library Update Options**, enable the following:
+   - **Update library on startup**: Automatically scans for new media when Kodi is launched.
+   - **Show library updates progress**: Displays a progress bar during updates.
+
+---
+
+#### **4. Verify Metadata Downloads**
+
+1. Navigate to your **Movies** or **TV Shows** section in Kodi.
+2. Check that metadata (e.g., posters, synopses, cast information) is correctly displayed for each item.
+3. If metadata is missing:
+   - Right-click or long-press on the item and choose **Information**.
+   - Manually select **Refresh** to download the metadata again.
+
+
+This setup ensures that Kodi will read your media from the correct folders and display detailed metadata for movies and TV shows.
+
+---
+
+## **Tips for Maintaining and Enhancing Your Setup**
+
+
+### **1. Updating Kodi's Library**
+
+If a newly downloaded movie or TV show does not appear in Kodi:  
+- This typically happens because the library needs to be updated to reflect the latest changes.
+
+To manually update the library:  
+1. Open Kodi and navigate to the **Movies** or **TV Shows** section.  
+2. Click **Update Library** in the side menu, or long-press (right-click) on the source folder and select **Scan for new content**.  
+3. Kodi will rescan the directory and add the new media along with its metadata.
+
+For convenience:  
+- Enabling **Update library on startup** (explained in the configuration section) ensures Kodi automatically checks for new media each time it launches.
+
+---
+
+### **2. Controlling Radarr and Sonarr from Your Mobile**
+
+To manage Radarr and Sonarr directly from your phone, you can use the **Rudarr** app.  
+
+- **Download Rudarr:**
+  - [App Store (iOS)](https://apps.apple.com/es/app/ruddarr/id6476240130)    
+
+---
+
+#### **Setting Up Rudarr**
+
+1. Open the Rudarr app after installation.
+2. Add Radarr and Sonarr by providing the following details:
+   - **URL**: Use the URL of your Radarr and Sonarr instances (e.g., `http://<your-local-ip>:7878` for Radarr, and `http://<your-local-ip>:8989` for Sonarr).
+   - **API Key**: Found in Radarr and Sonarr under:
+     - **Settings > General > Security**: Copy the API key.
+
+Once configured, Rudarr allows you to search, add, and manage downloads directly from your mobile device, making it a powerful addition to your media automation setup.
 
 
