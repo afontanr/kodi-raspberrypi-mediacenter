@@ -1,6 +1,10 @@
 # kodi-raspberrypi-mediacenter
 Comprehensive guide to setting up a Raspberry Pi media center with LibreELEC and Kodi, using Docker for torrent automation with qBittorrent, Jackett, Sonarr, and Radarr. Learn how to configure external storage, manage subtitles, and organize your media library for a seamless 4K home entertainment experience.
 
+## Disclaimer
+
+This project is intended for personal and educational purposes only. The author does not condone or support the use of this project for illegal activities, including downloading or accessing copyrighted content without proper authorization. Users are solely responsible for ensuring compliance with applicable laws in their jurisdiction.
+
 ## Hardware Requirements
 
 To set up the system, you'll need the following hardware components:
