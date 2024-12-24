@@ -617,7 +617,6 @@ To manage Radarr and Sonarr directly from your phone, you can use the **Rudarr**
 - **Download Rudarr:**
   - [App Store (iOS)](https://apps.apple.com/es/app/ruddarr/id6476240130)    
 
----
 
 #### **Setting Up Rudarr**
 
