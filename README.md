@@ -1187,4 +1187,35 @@ To add another device (an iPad, laptop, or a second phone):
 
 Existing clients continue to work without interruption — each new client is added alongside the existing ones automatically.
 
+## Troubleshooting
+
+### Container Fails to Start
+
+```bash
+docker logs <container-name>  # Check for error messages
+docker inspect <container-name>  # Check mount points and network
+```
+
+Common causes:
+- **Port already in use:** Another service is using the mapped port. Check with `netstat -tlnp | grep <port>`.
+- **Wrong config path:** A typo in a `-v` mount path. Verify the directory exists with `ls`.
+- **Permission denied:** The container's PUID/PGID does not have access to the mounted directory. Run `chmod -R 777 /storage/external_disk/config/<service>` to fix.
+
+### Services Not Reachable
+
+- **Wrong IP:** Your Pi's IP may have changed. Check with `ip addr show eth0 | grep inet`.
+- **Docker network issue:** Ensure the container is on `media-network` with `docker network inspect media-network`.
+- **LibreELEC firewall:** LibreELEC has no firewall by default, so this is rarely the cause.
+
+### Media Not Appearing in Kodi
+
+- **Library needs refresh:** Go to the Movies/TV Shows section, open the side menu, click **Update Library**.
+- **Wrong folder:** Verify Kodi is pointing to `/media/movies` and `/media/tv`, not the `/downloads` folders.
+- **Naming:** Kodi scrapers need properly named files. Sonarr/Radarr handle this automatically, but manual downloads may need renaming.
+
+### WireGuard Won't Connect
+
+- **Port forwarding:** Confirm your router is forwarding UDP 51820 to your Pi's local IP.
+- **DuckDNS not updating:** Check `docker logs duckdns` — you should see `OK`. If `KO`, verify your token and subdomain.
+- **Carrier-grade NAT:** Some ISPs use CGNAT — WireGuard won't work behind it. Contact your ISP or request a static IP.
 
