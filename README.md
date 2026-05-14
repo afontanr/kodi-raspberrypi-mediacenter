@@ -1017,6 +1017,39 @@ Run `df -h /storage/external_disk` periodically to check remaining space on your
 
 ---
 
+## Backing Up Your Configuration
+
+All container configuration lives in `/storage/external_disk/config/` and `/storage/external_disk/docker/config/`. Back these up regularly to avoid losing your setup.
+
+### Quick Backup to a USB Stick
+
+1. Insert a second USB drive. It will appear as `/dev/sdb1` (check with `blkid`).
+2. Mount it and copy:
+
+```bash
+mkdir -p /tmp/backup-mount
+mount /dev/sdb1 /tmp/backup-mount
+cp -r /storage/external_disk/config /tmp/backup-mount/
+cp -r /storage/external_disk/docker/config /tmp/backup-mount/
+umount /tmp/backup-mount
+```
+
+### What to Back Up
+
+| Directory | Contains |
+|---|---|
+| `config/qbittorrent` | qBittorrent settings, categories |
+| `config/jackett` | Jackett indexers, API key |
+| `config/sonarr` | Sonarr library, profiles, API key |
+| `config/radarr` | Radarr library, profiles, API key |
+| `config/lidarr` | Lidarr library, profiles, plugins, API key |
+| `config/slskd` | slskd.yml, Soulseek credentials |
+| `docker/config/wg-easy` | WireGuard server keys, client profiles |
+
+These are small (usually < 100 MB total). Your media files in `/storage/external_disk/media/` are large and should be backed up separately if you can't re-download them.
+
+---
+
 ## Secure Remote Access with WireGuard and DuckDNS
 
 This section explains how to access your media center services (Sonarr, Radarr, qBittorrent, Jackett, and Kodi) from outside your home network through an encrypted WireGuard VPN tunnel. DuckDNS provides a stable domain name so your devices can always find your Raspberry Pi, even when your home IP address changes.
