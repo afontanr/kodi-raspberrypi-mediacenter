@@ -948,6 +948,22 @@ When connected to your WireGuard VPN, stream your music from anywhere:
 - **Web:** `http://10.8.0.1:4533`
 - **Mobile apps:** Use `http://10.8.0.1:4533` as the server address.
 
+### 3. Connect from iPhone with Substreamer
+
+Substreamer is a free Subsonic client that connects to Navidrome and gives you a polished, Apple Music-like experience on your iPhone.
+
+1. Install **Substreamer** from the [App Store](https://apps.apple.com/app/substreamer/id1012991665).
+2. Open the app and tap **Add Server** (or the **+** icon if you already have servers configured).
+3. Enter the connection details:
+   - **Server URL:** `http://<your-pi-ip>:4533`
+   - **Username / Password:** The admin credentials you created during Navidrome's initial setup.
+4. Tap **Connect** or **Save**. Substreamer will connect to your Navidrome server and load your music library.
+5. Your artists, albums, and playlists now appear in the app. You can browse, search, stream, and download music for offline listening.
+
+> **Tip:** Enable **Offline Cache** in Substreamer's settings to download albums for listening without a network connection — great for flights or commuting.
+
+When connected via WireGuard VPN, use `http://10.8.0.1:4533` as the server URL instead.
+
 ---
 
 ## **Tips for Maintaining and Enhancing Your Setup**
