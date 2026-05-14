@@ -280,6 +280,7 @@ Now that Docker is installed, we can set up the containers needed for our media 
 - **Radarr**: For managing and automating movie downloads.  
 - **Lidarr**: For managing and automating music downloads.  
 - **Navidrome**: A lightweight music streaming server for accessing your library from any device.  
+- **Jellyfin**: An open-source media server for streaming your library to any device.  
 - **slskd**: A headless Soulseek client for peer-to-peer music discovery and downloading.  
 - **Tubifarry**: A Lidarr plugin that adds Soulseek as a native indexer and download client, so Lidarr searches and downloads from Soulseek directly — no external bridge needed.  
 
@@ -378,6 +379,27 @@ docker run -d \
   --restart unless-stopped \
   deluan/navidrome
 ```
+#### **Jellyfin**
+Jellyfin is an open-source media server that streams your movies, TV shows, and music to any device — phones, tablets, laptops, or smart TVs — with optimized playback and hardware transcoding.
+
+```bash
+docker run -d \
+  --name jellyfin \
+  --network media-network \
+  --device /dev/dri:/dev/dri \
+  -p 8096:8096 \
+  -v /storage/external_disk/docker/config/jellyfin:/config \
+  -v /storage/external_disk/media/tv:/data/tvshows \
+  -v /storage/external_disk/media/movies:/data/movies \
+  -v /storage/external_disk/media/music:/data/music \
+  -e PUID=1000 -e PGID=1000 \
+  --restart unless-stopped \
+  linuxserver/jellyfin
+```
+
+- `--device /dev/dri:/dev/dri` passes the Raspberry Pi 5's hardware video decoder through to the container, enabling hardware-accelerated transcoding.
+- Media folders are mounted under `/data` to follow Jellyfin's recommended path structure.
+
 #### **slskd**  
 slskd is a headless Soulseek client — it connects to the Soulseek peer-to-peer network where a massive catalog of music is shared by millions of users. It serves as an alternative download source to torrents for Lidarr, especially useful for rare or obscure music.
 
@@ -840,36 +862,7 @@ Your music will now appear in Kodi's **Music** section with full metadata, and t
 
 Jellyfin is an open-source media server that streams your movies and TV shows to any device — phones, tablets, laptops, or smart TVs — with optimized playback and hardware transcoding. It complements Kodi: use Kodi for viewing directly on your TV, and Jellyfin's apps or web UI when watching on other devices.
 
-### 1. Deploy the Jellyfin Container
-
-Now run the container:
-
-```bash
-docker run -d \
-  --name jellyfin \
-  --network media-network \
-  --device /dev/dri:/dev/dri \
-  -p 8096:8096 \
-  -v /storage/external_disk/docker/config/jellyfin:/config \
-  -v /storage/external_disk/media/tv:/data/tvshows \
-  -v /storage/external_disk/media/movies:/data/movies \
-  -v /storage/external_disk/media/music:/data/music \
-  -e PUID=1000 -e PGID=1000 \
-  --restart unless-stopped \
-  linuxserver/jellyfin
-```
-
-- `--device /dev/dri:/dev/dri` passes the Raspberry Pi 5's hardware video decoder through to the container, enabling hardware-accelerated transcoding.
-- `--network media-network` places Jellyfin on the same Docker network as Sonarr, Radarr, and qBittorrent.
-- Media folders are mounted under `/data` to follow Jellyfin's recommended path structure.
-
-Verify it is running:
-
-```bash
-docker ps | grep jellyfin
-```
-
-### 2. Initial Setup
+### 1. Initial Setup
 
 1. Open your browser and navigate to `http://<your-pi-ip>:8096` (e.g., `http://192.168.1.100:8096`).
 2. The setup wizard appears. Choose your preferred language and click **Next**.
@@ -895,7 +888,7 @@ docker ps | grep jellyfin
 
 5. Click **Next**, then **Finish** to complete the wizard. Jellyfin will begin scanning your media folders and downloading metadata.
 
-### 3. Enable Hardware Acceleration
+### 2. Enable Hardware Acceleration
 
 Hardware acceleration offloads video transcoding to the Raspberry Pi 5's GPU, reducing CPU usage and improving streaming performance — especially important for 4K content or playback on devices that don't natively support your media formats.
 
@@ -911,7 +904,7 @@ Hardware acceleration offloads video transcoding to the Raspberry Pi 5's GPU, re
    - **VP9**
 5. Scroll down and click **Save** at the bottom of the page.
 
-### 4. Access Jellyfin
+### 3. Access Jellyfin
 
 | Device | Method |
 |---|---|
@@ -921,7 +914,7 @@ Hardware acceleration offloads video transcoding to the Raspberry Pi 5's GPU, re
 | **Smart TV** | Jellyfin app available on most platforms (LG, Samsung, Android TV, Roku) |
 | **Via WireGuard VPN** | `http://10.8.0.1:8096` — stream your media from anywhere |
 
-### 5. Optional: Sync Kodi with Jellyfin
+### 4. Optional: Sync Kodi with Jellyfin
 
 Install the **Jellyfin for Kodi** add-on to keep watched status and library updates synchronized between Kodi and Jellyfin:
 
