@@ -610,22 +610,21 @@ Lidarr uses two download sources in parallel:
    - Enter a new password in the Password field and confirm it in the Confirm Password field.
    - Click Apply to save the new password.
 
-#### Step 4: Set the Default Download Folder
-1. In the qBittorrent settings, navigate to Downloads.
-2. Under the Default Save Path section:
-   - Set the path to /downloads.
-   - Click Apply to save the changes.
-
-#### Step 5: Create Categories for Radarr, Sonarr, and Lidarr
-1. Go to the Categories tab in qBittorrent.
-2. Create the following categories:
+#### Step 4: Create Categories for Radarr, Sonarr, and Lidarr
+1. Go to the **Categories** tab in qBittorrent.
+2. Create the following categories (the category save path overrides the default for any torrent assigned to that category):
    - **movies-radarr**:
-     - Set the save path to /downloads/movies-radarr.
+     - Set the save path to `/downloads/movies-radarr`.
    - **tv-sonarr**:
-     - Set the save path to /downloads/tv-sonarr.
+     - Set the save path to `/downloads/tv-sonarr`.
    - **music-lidarr**:
-     - Set the save path to /downloads/music-lidarr.
-3. Click Apply to save the categories.
+     - Set the save path to `/downloads/music-lidarr`.
+3. Click **Apply** to save the categories.
+
+#### Step 5: Set the Default Download Folder (fallback)
+1. Go to the **Downloads** tab.
+2. Under **Default Save Path**, set the path to `/downloads`.
+3. This path is only used for torrents that have no assigned category — all *arr downloads use the category paths set above. Click **Apply**.
 
 ---
 
