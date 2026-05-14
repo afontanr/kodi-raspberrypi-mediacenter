@@ -419,8 +419,8 @@ Create `/storage/external_disk/config/slskd/slskd.yml` with the following conten
 directories:
   downloads: /downloads/music-lidarr
   incomplete: /downloads/incomplete
-  shared:
-    - /music
+  # shared:           # UNCOMMENT ONLY IF you want other Soulseek users to
+  #   - /music        # download files from your library. Review what you own.
 soulseek:
   username: <your-soulseek-username>
   password: <your-soulseek-password>
@@ -457,7 +457,7 @@ docker run -d \
 
 - Port 5030: Web UI (check status, browse network, search)
 - Port 5031: Soulseek protocol (needed for peer connections — also forward this UDP port on your router for better connectivity)
-- The `shared` directory in the config lets other Soulseek users download from your library (optional — remove the `shared` section if you prefer not to share).
+- The `shared` directory in the config lets other Soulseek users browse and download files from your library. This is disabled by default in the YAML above. Enable it only if you intend to participate as a sharer on the network and have reviewed which folders are exposed.
 
 #### slskd Initial Setup
 
