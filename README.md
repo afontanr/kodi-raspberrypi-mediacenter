@@ -197,27 +197,43 @@ To ensure proper organization and functionality for the Docker containers, you n
 
 ### 2. Create Required Directories  
    - Run the following commands to create the necessary directories:
-     ```
-     mkdir -p docker/config
-     mkdir -p downloads/movies-radarr
-     mkdir -p downloads/tv-sonarr
-     mkdir -p media/movies
-     mkdir -p media/tv
-     ```
+      ```
+       mkdir -p config/qbittorrent
+       mkdir -p config/jackett
+       mkdir -p config/sonarr
+       mkdir -p config/radarr
+       mkdir -p config/lidarr
+       mkdir -p config/navidrome
+       mkdir -p config/slskd
+       mkdir -p docker/config/jellyfin
+       mkdir -p docker/config/wg-easy
+       mkdir -p downloads/movies-radarr
+       mkdir -p downloads/tv-sonarr
+       mkdir -p downloads/music-lidarr
+       mkdir -p downloads/incomplete
+       mkdir -p media/movies
+       mkdir -p media/tv
+       mkdir -p media/music
+      ```
 
 ### 3. Explanation of the Directories  
-   - **`docker/config`:** Stores configuration files for all Docker containers, such as settings for qBittorrent, Sonarr, Radarr, and Jackett.  
+   - **`docker/config`:** Stores configuration files for all Docker containers, such as settings for qBittorrent, Sonarr, Radarr, Jackett, Jellyfin, and WireGuard.  
+   - **`/storage/external_disk/config/slskd`:** Stores slskd configuration (YAML file and Soulseek credentials).  
    - **`downloads`:** Temporary storage for media files downloaded by the containers.  
-     - **`movies-radarr`:** For movies downloaded by Radarr.  
-     - **`tv-sonarr`:** For TV shows downloaded by Sonarr.  
+       - **`movies-radarr`:** For movies downloaded by Radarr.  
+       - **`tv-sonarr`:** For TV shows downloaded by Sonarr.  
+       - **`music-lidarr`:** For music downloaded by Lidarr.  
+       - **`incomplete`:** For in-progress downloads by slskd (Soulseek).
    - **`media`:** Final destination for organized media files:  
-     - **`movies`:** For properly imported and sorted movies.  
-     - **`tv`:** For properly imported and sorted TV shows.
+       - **`movies`:** For properly imported and sorted movies.  
+       - **`tv`:** For properly imported and sorted TV shows.
+       - **`music`:** For properly imported and sorted music (Artist/Album/Track).
 
 ### 4. Set Permissions for the Directories  
    - Ensure the Docker containers have full access by granting the appropriate permissions:
      ```
-     chmod -R 777 docker downloads media
+      chmod -R 777 docker downloads media
+      chmod g+s downloads
      ```
 
 Your directories are now ready for use. This setup ensures a clean separation between configurations, downloads, and organized media, making it easier to manage your system.
@@ -255,6 +271,10 @@ Now that Docker is installed, we can set up the containers needed for our media 
 - **Jackett**: Acts as an indexer proxy for qBittorrent.  
 - **Sonarr**: For managing and automating TV show downloads.  
 - **Radarr**: For managing and automating movie downloads.  
+- **Lidarr**: For managing and automating music downloads.  
+- **Navidrome**: A lightweight music streaming server for accessing your library from any device.  
+- **slskd**: A headless Soulseek client for peer-to-peer music discovery and downloading.  
+- **Tubifarry**: A Lidarr plugin that adds Soulseek as a native indexer and download client, so Lidarr searches and downloads from Soulseek directly — no external bridge needed.  
 
 ### 1. Create a Docker Network  
 First, create a dedicated Docker network to allow all containers to communicate seamlessly:  
@@ -321,6 +341,115 @@ docker run -d \
   --restart unless-stopped \
   linuxserver/radarr
 ```
+#### **Lidarr**  
+Lidarr is the music equivalent of Sonarr and Radarr — it automates finding, downloading, and organizing music. The **nightly** tag is required for the plugin system (Tubifarry).  
+
+```bash
+docker run -d \
+  --name lidarr \
+  --network media-network \
+  -p 8686:8686 \
+  -v /storage/external_disk/config/lidarr:/config \
+  -v /storage/external_disk/media/music:/music \
+  -v /storage/external_disk/downloads:/downloads \
+  -e PUID=1000 -e PGID=1000 \
+  --restart unless-stopped \
+  linuxserver/lidarr:nightly
+```
+#### **Navidrome**  
+Navidrome is a lightweight, modern music streaming server compatible with the Subsonic API — think of it as your personal Spotify. It serves your music library to web browsers and mobile apps.  
+
+```bash
+docker run -d \
+  --name navidrome \
+  --network media-network \
+  -p 4533:4533 \
+  -v /storage/external_disk/config/navidrome:/data \
+  -v /storage/external_disk/media/music:/music:ro \
+  -e ND_MUSICFOLDER=/music \
+  -e PUID=1000 -e PGID=1000 \
+  --restart unless-stopped \
+  deluan/navidrome
+```
+#### **slskd**  
+slskd is a headless Soulseek client — it connects to the Soulseek peer-to-peer network where a massive catalog of music is shared by millions of users. It serves as an alternative download source to torrents for Lidarr, especially useful for rare or obscure music.
+
+Create `/storage/external_disk/config/slskd/slskd.yml` with the following content:
+
+```yaml
+directories:
+  downloads: /downloads/music-lidarr
+  incomplete: /downloads/incomplete
+  shared:
+    - /music
+soulseek:
+  username: <your-soulseek-username>
+  password: <your-soulseek-password>
+web:
+  port: 5030
+  authentication:
+    disabled: false
+    username: admin
+    password: <choose-a-password>
+    api_keys:
+      tubifarry:
+        key: <generate-with-openssl-rand-hex-16>
+        role: ReadWrite
+```
+
+> Register a free account on the Soulseek network first — you can use any Soulseek desktop client or [register via Nicotine+](https://nicotine-plus.org/doc/SOULSEEK.htm).
+
+Now run the container:
+
+```bash
+docker run -d \
+  --name slskd \
+  --network media-network \
+  -p 5030:5030 \
+  -p 5031:5031 \
+  -v /storage/external_disk/config/slskd:/app \
+  -v /storage/external_disk/media/music:/music:ro \
+  -v /storage/external_disk/downloads:/downloads \
+  -e PUID=1000 -e PGID=1000 \
+  -e SLSKD_UMASK=002 \
+  --restart unless-stopped \
+  slskd/slskd
+```
+
+- Port 5030: Web UI (check status, browse network, search)
+- Port 5031: Soulseek protocol (needed for peer connections — also forward this UDP port on your router for better connectivity)
+- The `shared` directory in the config lets other Soulseek users download from your library (optional — remove the `shared` section if you prefer not to share).
+
+#### **Tubifarry (Lidarr Plugin)**  
+Tubifarry is a Lidarr plugin that adds Soulseek as a **native indexer and download client** directly inside Lidarr. Unlike Soularr (which ran as a separate polling container), Tubifarry integrates Soulseek the same way Jackett + qBittorrent work for torrents — when you search for an artist in Lidarr, it queries Soulseek alongside your torrent indexers, and you can pick releases from either source. No extra Docker container, config file, or cron-like polling needed.
+
+##### Install the Plugin
+
+1. Open Lidarr at `http://<your-pi-local-ip>:8686`.
+2. Go to **System > Plugins**.
+3. Paste `https://github.com/TypNull/Tubifarry` into the GitHub URL box and click **Install**.
+
+##### Configure the Soulseek Indexer
+
+1. In Lidarr, go to **Settings > Indexers** and click **Add** (**+**).
+2. Select **Slskd** from the list (added by Tubifarry).
+3. Configure:
+   - **URL:** `http://slskd:5030`
+   - **API Key:** The key you generated and placed in `slskd.yml` under `web.authentication.api_keys.tubifarry.key`
+   - **Include Only Audio Files:** Enable
+4. Click **Test** to verify the connection, then **Save**.
+
+##### Configure the Soulseek Download Client
+
+1. In Lidarr, go to **Settings > Download Clients** and click **Add** (**+**).
+2. Select **Slskd** from the list (added by Tubifarry).
+3. The download path is fetched automatically from slskd. If paths don't match between containers, use **Remote Path Mappings** in Lidarr settings.
+4. Click **Test** to verify, then **Save**.
+
+Lidarr now has Soulseek as a fully integrated download source — search results from Soulseek appear alongside torrent results, and downloads are managed directly by Lidarr.
+
+> **Tip:** Tubifarry includes optional features like YouTube downloads, Spotify playlist imports, and soundtrack fetching from Sonarr/Radarr. See the [Tubifarry docs](https://github.com/TypNull/Tubifarry) if you want to explore them later.
+
 ### 3. Verify the Containers
    Run the following command to ensure all containers are up and running:  
    ```bash
@@ -377,6 +506,37 @@ docker run -d \
 
 ---
 
+### Lidarr
+
+#### Step 1: Access Lidarr
+1. Open your browser and navigate to the IP address of your Raspberry Pi with the Lidarr port (default: `http://<raspberry_pi_ip>:8686`).
+   Example: `http://192.168.1.100:8686`.
+
+2. You'll see the Lidarr dashboard. If it's your first time accessing it, follow the setup wizard or proceed with the manual setup below.
+
+#### Step 2: Set Up Authentication
+1. Navigate to **Settings** > **General**.
+2. In the **Security** section:
+   - Set a **Username** and **Password** for accessing Lidarr.
+   - Enable the option **Bypass Authentication for Local Addresses** to allow access without authentication from localhost.
+   - Click **Save** to apply the changes.
+
+#### Step 3: Configure Root Folder
+1. Go to **Settings** > **Media Management**.
+2. In the **Root Folders** section:
+   - Click **Add Root Folder**.
+   - Set the root folder to `/music` (this is the path where your music will be stored).
+   - Save the configuration.
+
+#### Step 4: Configure Download Clients and Indexers
+
+Lidarr uses two download sources in parallel:
+
+- **Torrents (Jackett + qBittorrent):** Follow the shared instructions in [Connecting Sonarr, Radarr, and Lidarr with qBittorrent and Jackett](#connecting-sonarr-radarr-and-lidarr-with-qbittorrent-and-jackett) below. For Tornab indexers, use category `3000,3010,3020`.
+- **Soulseek (Tubifarry + slskd):** Already configured in the [Tubifarry](#tubifarry-lidarr-plugin) section above.
+
+---
+
 ### qBittorrent
 
 #### Step 1: Retrieve Default Password from Container Logs
@@ -409,13 +569,15 @@ docker run -d \
    - Set the path to /downloads.
    - Click Apply to save the changes.
 
-#### Step 5: Create Categories for Radarr and Sonarr 
+#### Step 5: Create Categories for Radarr, Sonarr, and Lidarr
 1. Go to the Categories tab in qBittorrent.
 2. Create the following categories:
    - **movies-radarr**:
      - Set the save path to /downloads/movies-radarr.
    - **tv-sonarr**:
      - Set the save path to /downloads/tv-sonarr.
+   - **music-lidarr**:
+     - Set the save path to /downloads/music-lidarr.
 3. Click Apply to save the categories.
 
 ---
@@ -446,25 +608,59 @@ docker run -d \
 
 #### Step 5: Save and Exit
 1. After confirming everything works, close the Jackett web UI or leave it running in the background.
-2. Your Jackett configuration is now complete, and it’s ready to be linked with Radarr and Sonarr.
+2. Your Jackett configuration is now complete, and it's ready to be linked with Sonarr, Radarr, and Lidarr.
+
+---
+
+### slskd
+
+#### Step 1: Access the slskd Web UI
+1. Open your browser and navigate to `http://<raspberry_pi_ip>:5030`. Example: `http://192.168.1.100:5030`.
+2. You'll see the slskd dashboard showing connection status, active transfers, and search capabilities.
+
+#### Step 2: Verify Soulseek Connection
+1. On the slskd dashboard, check the status indicator at the top. It should show **Connected** in green once your credentials are accepted.
+2. If it shows **Disconnected**, verify the username and password in your `slskd.yml` file and restart the container: `docker restart slskd`.
+
+#### Step 3: Create an API Key for Tubifarry
+1. Generate a random API key string by running this on your Pi:
+   ```bash
+   openssl rand -hex 16
+   ```
+2. Copy the output and add it to your `slskd.yml` under `web.authentication.api_keys.tubifarry.key`.
+3. Restart slskd: `docker restart slskd`
+4. Use this key value as the API Key when configuring the Slskd indexer and download client in Lidarr.
+
+---
+
+### Tubifarry Verification
+
+Tubifarry runs inside Lidarr as a plugin, so there is no separate container to check. To confirm everything is working:
+
+1. Open Lidarr and go to **System > Plugins** — Tubifarry should appear in the installed plugins list.
+2. Go to **Settings > Indexers** — click **Test** on the Slskd indexer you configured. It should return a green checkmark.
+3. Go to **Settings > Download Clients** — click **Test** on the Slskd download client. It should also return a green checkmark.
+
+If either test fails, verify the slskd container is running (`docker ps | grep slskd`), the API key in `slskd.yml` matches what you entered in Lidarr, and slskd was restarted after editing the config.
 
 This completes the initial setup.
 
 ---
 
-## Connecting Sonarr and Radarr with qBittorrent and Jackett
+## Connecting Sonarr, Radarr, and Lidarr with qBittorrent and Jackett
 
-In this section, we will configure Sonarr and Radarr to connect with qBittorrent for downloading content and with Jackett for accessing indexers.
+In this section, we will configure Sonarr, Radarr, and Lidarr to connect with qBittorrent for downloading content and with Jackett for accessing indexers.
 
 
-### **1. Adding qBittorrent to Sonarr and Radarr**
+### **1. Adding qBittorrent to Sonarr, Radarr, and Lidarr**
 
-1. **Open Sonarr and Radarr** in your browser.
+1. **Open Sonarr, Radarr, or Lidarr** in your browser.
    - Sonarr: `http://<your_raspberry_pi_IP>:8989`
    - Radarr: `http://<your_raspberry_pi_IP>:7878`
+   - Lidarr: `http://<your_raspberry_pi_IP>:8686`
 
 2. **Navigate to the Download Client settings:**
-   - In Sonarr or Radarr, go to **Settings > Download Clients**.
+   - In Sonarr, Radarr, or Lidarr, go to **Settings > Download Clients**.
    - Click on the **+** button to add a new download client.
 
 3. **Configure qBittorrent:**
@@ -479,7 +675,7 @@ In this section, we will configure Sonarr and Radarr to connect with qBittorrent
 
 ---
 
-### **2. Adding Jackett Indexers to Sonarr and Radarr**
+### **2. Adding Jackett Indexers to Sonarr, Radarr, and Lidarr**
 
 #### **Step 1: Get the Indexer URL and API Key from Jackett**
 1. **Access Jackett:**
@@ -498,10 +694,10 @@ In this section, we will configure Sonarr and Radarr to connect with qBittorrent
 
 3. **Get the API Key:**
    - In Jackett, go to **API Key** in the top-right corner of the interface.
-   - Copy the key for use in Sonarr and Radarr.
+   - Copy the key for use in Sonarr, Radarr, and Lidarr.
 
-#### **Step 2: Add the Indexer to Sonarr and Radarr**
-1. **Open Sonarr or Radarr** and go to **Settings > Indexers**.
+#### **Step 2: Add the Indexer to Sonarr, Radarr, and Lidarr**
+1. **Open Sonarr, Radarr, or Lidarr** and go to **Settings > Indexers**.
 2. **Add a New Indexer:**
    - Click **+** and select **Torznab**.
 3. **Configure the Torznab Indexer:**
@@ -511,6 +707,7 @@ In this section, we will configure Sonarr and Radarr to connect with qBittorrent
    - **Categories:**
      - For **Sonarr**, use the category: `5000, 5070`.
      - For **Radarr**, use the category: `2000, 2010`.
+     - For **Lidarr**, use the category: `3000, 3010, 3020`.
    - Click **Test** to ensure the connection works.
    - Click **Save**.
 
@@ -519,16 +716,37 @@ In this section, we will configure Sonarr and Radarr to connect with qBittorrent
 ### **3. Testing the Setup**
 
 1. **Search for Titles:**
-   - In Sonarr or Radarr, go to **Add New Series** or **Add New Movie**.
+   - In Sonarr, Radarr, or Lidarr, go to **Add New Series**, **Add New Movie**, or **Add New Artist**.
    - Search for a title and add it to your library.
 
 2. **Verify Download Client Integration:**
-   - When a title is searched, Sonarr or Radarr will use the Jackett indexer to find torrents and send them to qBittorrent.
+   - When a title is searched, Sonarr, Radarr, or Lidarr will use the Jackett indexer to find torrents and send them to qBittorrent.
 
 3. **Check qBittorrent:**
    - Open qBittorrent and verify that the download appears under the correct category:
      - **TV-Sonarr**: Downloads TV series.
      - **Movies-Radarr**: Downloads movies.
+      - **Music-Lidarr**: Downloads music.
+
+---
+
+### **4. How Lidarr Works with Both Torrents and Soulseek**
+
+Lidarr can use **both** download sources simultaneously — there's no need to pick one:
+
+- **Torrent path (Jackett + qBittorrent):** Set up in the steps above using Torznab indexers and the qBittorrent download client. Useful for popular releases that appear on torrent trackers.
+- **Soulseek path (Tubifarry + slskd):** Tubifarry adds Soulseek as a native indexer and download client within Lidarr. When you search for a release, Soulseek results appear alongside torrent results in the same interface. Downloads are sent to slskd and handled by Lidarr just like any other download client.
+
+When you add an artist in Lidarr:
+
+1. Lidarr searches all configured indexers — Jackett (torrents) and Slskd (Soulseek) — in parallel.
+2. Search results from both sources appear together under the artist's search tab.
+3. You pick a release, Lidarr sends it to the matching download client (qBittorrent for torrents, slskd for Soulseek).
+4. Lidarr monitors the download and imports it to `/music` once complete.
+
+Lidarr automatically detects newly downloaded music in the root folder (`/music`) and imports it, regardless of which source provided the files.
+
+> **Tip:** If you find that torrents are sufficient for your music tastes, you can remove the slskd container at any time and disable the Slskd indexer/download client in Lidarr without affecting anything else. The Jackett/qBittorrent integration is fully independent.
 
 ---
 
@@ -592,6 +810,156 @@ This setup ensures that Kodi will read your media from the correct folders and d
 
 ---
 
+#### **5. Set Up the Music Section**
+
+Kodi can also manage and play your music library with album art, artist biographies, and other metadata.
+
+1. Go to **Settings (Gear Icon) > Media Settings > Library**.
+2. Select **Music**, then click **Add Music...**.
+3. In the dialog box that appears:
+   - **Browse** to the folder where your music is stored: `/media/music`.
+   - Click **OK** to confirm.
+4. Enter a name for this source, e.g., `Music`, and click **OK**.
+5. In the next screen:
+   - Choose a scraper for metadata (e.g., **Universal Album Scraper** or **Universal Artist Scraper**).
+   - Click **OK**.
+6. In the confirmation prompt, select **Yes** to scan the folder and download album art and artist information.
+
+Your music will now appear in Kodi's **Music** section with full metadata, and the automatic library updates (enabled in step 3) will keep it current when new albums are added.
+
+---
+
+## Setting Up Jellyfin for Multi-Device Streaming
+
+Jellyfin is an open-source media server that streams your movies and TV shows to any device — phones, tablets, laptops, or smart TVs — with optimized playback and hardware transcoding. It complements Kodi: use Kodi for viewing directly on your TV, and Jellyfin's apps or web UI when watching on other devices.
+
+### 1. Deploy the Jellyfin Container
+
+Now run the container:
+
+```bash
+docker run -d \
+  --name jellyfin \
+  --network media-network \
+  --device /dev/dri:/dev/dri \
+  -p 8096:8096 \
+  -v /storage/external_disk/docker/config/jellyfin:/config \
+  -v /storage/external_disk/media/tv:/data/tvshows \
+  -v /storage/external_disk/media/movies:/data/movies \
+  -v /storage/external_disk/media/music:/data/music \
+  -e PUID=1000 -e PGID=1000 \
+  --restart unless-stopped \
+  linuxserver/jellyfin
+```
+
+- `--device /dev/dri:/dev/dri` passes the Raspberry Pi 5's hardware video decoder through to the container, enabling hardware-accelerated transcoding.
+- `--network media-network` places Jellyfin on the same Docker network as Sonarr, Radarr, and qBittorrent.
+- Media folders are mounted under `/data` to follow Jellyfin's recommended path structure.
+
+Verify it is running:
+
+```bash
+docker ps | grep jellyfin
+```
+
+### 2. Initial Setup
+
+1. Open your browser and navigate to `http://<your-pi-local-ip>:8096` (e.g., `http://192.168.1.100:8096`).
+2. The setup wizard appears. Choose your preferred language and click **Next**.
+3. Create an admin account by setting a username and password.
+4. Click **Add Media Library**, then configure your libraries:
+
+   **Movies library:**
+   - **Content type:** Movies
+   - **Display name:** Movies
+   - **Folders:** Click the **+** button, enter `/data/movies`, and confirm.
+
+    **TV Shows library:**
+    - Click **Add Media Library** again.
+    - **Content type:** Shows
+    - **Display name:** TV Shows
+    - **Folders:** Click **+**, enter `/data/tvshows`, and confirm.
+
+    **Music library:**
+    - Click **Add Media Library** again.
+    - **Content type:** Music
+    - **Display name:** Music
+    - **Folders:** Click **+**, enter `/data/music`, and confirm.
+
+5. Click **Next**, then **Finish** to complete the wizard. Jellyfin will begin scanning your media folders and downloading metadata.
+
+### 3. Enable Hardware Acceleration
+
+Hardware acceleration offloads video transcoding to the Raspberry Pi 5's GPU, reducing CPU usage and improving streaming performance — especially important for 4K content or playback on devices that don't natively support your media formats.
+
+1. In Jellyfin, go to **Dashboard** (the gear icon in the top-right) → **Playback**.
+2. Under **Hardware Acceleration**, select **Video4Linux2 (V4L2)** from the dropdown.
+3. Check **Enable hardware encoding**.
+4. Check the following codec boxes under "Enable hardware decoding for":
+   - **H264**
+   - **HEVC**
+   - **MPEG2**
+   - **VC1**
+   - **VP8**
+   - **VP9**
+5. Scroll down and click **Save** at the bottom of the page.
+
+### 4. Access Jellyfin
+
+| Device | Method |
+|---|---|
+| **Web browser** | `http://<your-pi-local-ip>:8096` |
+| **iPhone / iPad** | Jellyfin app from the [App Store](https://apps.apple.com/app/jellyfin/id1480192618) |
+| **Android** | Jellyfin app from the [Play Store](https://play.google.com/store/apps/details?id=org.jellyfin.mobile) |
+| **Smart TV** | Jellyfin app available on most platforms (LG, Samsung, Android TV, Roku) |
+| **Via WireGuard VPN** | `http://10.8.0.1:8096` — stream your media from anywhere |
+
+### 5. Optional: Sync Kodi with Jellyfin
+
+Install the **Jellyfin for Kodi** add-on to keep watched status and library updates synchronized between Kodi and Jellyfin:
+
+1. Install the [Jellyfin Kodi repository](https://jellyfin.org/docs/general/clients/kodi/#install) from the Kodi file manager.
+2. Open Kodi, go to **Add-ons** → **Install from repository** → **Jellyfin Repository** → **Video add-ons** → **Jellyfin**.
+3. Follow the prompt to connect to your Jellyfin server at `http://<your-pi-local-ip>:8096`.
+4. Choose **Native mode** during setup for the best Kodi integration.
+
+Now when you watch something in Kodi, Jellyfin marks it as watched — and vice versa.
+
+---
+
+## Setting Up Navidrome for Music Streaming
+
+Navidrome is a lightweight, self-hosted music server compatible with the Subsonic API, giving you a personal Spotify-like experience. It streams your music library to web browsers and mobile apps with gapless playback, transcoding, and smart playlists. Deployed via Docker above, it's already pointed at your music folder — now it just needs initial setup.
+
+### 1. Initial Setup
+
+1. Open your browser and navigate to `http://<your-pi-local-ip>:4533` (e.g., `http://192.168.1.100:4533`).
+2. The first time you visit, you'll see a setup screen. Create the admin account by setting a username and password.
+3. After login, Navidrome automatically scans `/music` and begins indexing your library. Album art, artist images, and metadata are fetched automatically from MusicBrainz and Last.fm.
+
+### 2. Connect Mobile Apps and Desktop Clients
+
+Navidrome is compatible with any **Subsonic client**. Here are some popular options:
+
+| Platform | Recommended App |
+|---|---|
+| **iPhone / iPad** | [play:Sub](https://apps.apple.com/app/playsub-music-streamer/id995329482) or [Substreamer](https://apps.apple.com/app/substreamer/id1012991665) |
+| **Android** | [Symfonium](https://play.google.com/store/apps/details?id=app.symfonik.music.player) (paid) or [Subtracks](https://play.google.com/store/apps/details?id=com.subtrack) (free) |
+| **Desktop (Web)** | `http://<your-pi-local-ip>:4533` |
+| **Desktop (App)** | [Sonixd](https://github.com/jeffvli/sonixd) or [Feishin](https://github.com/jeffvli/feishin) |
+
+To connect a Subsonic client:
+- **Server:** `http://<your-pi-local-ip>:4533`
+- **Username / Password:** The admin credentials you created in step 1.
+
+### 3. Access via WireGuard VPN
+
+When connected to your WireGuard VPN, stream your music from anywhere:
+- **Web:** `http://10.8.0.1:4533`
+- **Mobile apps:** Use `http://10.8.0.1:4533` as the server address.
+
+---
+
 ## **Tips for Maintaining and Enhancing Your Setup**
 
 
@@ -627,5 +995,177 @@ To manage Radarr and Sonarr directly from your phone, you can use the **Rudarr**
      - **Settings > General > Security**: Copy the API key.
 
 Once configured, Rudarr allows you to search, add, and manage downloads directly from your mobile device, making it a powerful addition to your media automation setup.
+
+---
+
+## Secure Remote Access with WireGuard and DuckDNS
+
+This section explains how to access your media center services (Sonarr, Radarr, qBittorrent, Jackett, and Kodi) from outside your home network through an encrypted WireGuard VPN tunnel. DuckDNS provides a stable domain name so your devices can always find your Raspberry Pi, even when your home IP address changes.
+
+### 1. Register a DuckDNS Domain
+
+1. Go to [https://www.duckdns.org](https://www.duckdns.org) and sign in with your GitHub or Google account.
+2. Create a subdomain of your choice (e.g., `myhome` — this gives you `myhome.duckdns.org`).
+3. Copy the **token** string displayed at the top of the page. You will need it in the next step.
+
+### 2. Deploy the DuckDNS Container
+
+The DuckDNS container periodically reports your home IP to DuckDNS so your domain always resolves correctly. It requires no config volume — all settings are passed as environment variables.
+
+```bash
+docker run -d \
+  --name duckdns \
+  --network media-network \
+  -e SUBDOMAINS=yourdomain \
+  -e TOKEN=your-token-uuid \
+  -e LOG_FILE=false \
+  --restart unless-stopped \
+  linuxserver/duckdns
+```
+
+- Replace `yourdomain` with the subdomain you created (e.g., `myhome`).
+- Replace `your-token-uuid` with the token copied from DuckDNS.
+
+Verify it is running and working:
+
+```bash
+docker logs duckdns
+```
+
+You should see a log line ending with `OK`. If you see `KO`, double-check your subdomain and token.
+
+### 3. Set Up Port Forwarding on Your Router
+
+WireGuard uses the UDP protocol on port **51820**. You must configure your router to forward incoming UDP traffic on this port to your Raspberry Pi's local IP address.
+
+Every router interface is different, but the general steps are:
+
+1. Log in to your router's admin panel (typically `http://192.168.1.1`).
+2. Find the **Port Forwarding** or **NAT** section.
+3. Add a new rule with these settings:
+   - **Protocol:** UDP
+   - **External port:** 51820
+   - **Internal IP:** Your Raspberry Pi's local IP (e.g., `192.168.1.100`)
+   - **Internal port:** 51820
+4. Save and apply the rule.
+
+If you need model-specific instructions, [https://portforward.com](https://portforward.com) is a good resource.
+
+### 4. Configure WireGuard with wg-easy
+
+`wg-easy` is a Docker image that runs WireGuard inside a container with a simple web interface for managing clients. It handles key generation, firewall rules, and QR code display automatically — no manual configuration files needed.
+
+#### 4.1 Enable Kernel Settings
+
+WireGuard needs two kernel parameters enabled on the host. Run these commands once:
+
+```bash
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv4.conf.all.src_valid_mark=1
+```
+
+To make these survive a reboot, add them to LibreELEC's autostart script:
+
+```bash
+nano /storage/.config/autostart.sh
+```
+
+Append the following lines (if the file is empty, add them as the first lines):
+
+```bash
+# Enable IP forwarding for WireGuard
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv4.conf.all.src_valid_mark=1
+```
+
+Save with `Ctrl+O`, exit with `Ctrl+X`.
+
+#### 4.2 Run the wg-easy Container
+
+Now run the container:
+
+```bash
+docker run -d \
+  --name wireguard \
+  --cap-add NET_ADMIN \
+  --cap-add SYS_MODULE \
+  --network host \
+  -v /storage/external_disk/docker/config/wg-easy:/etc/wireguard \
+  -e WG_HOST=yourdomain.duckdns.org \
+  -e WG_PORT=51820 \
+  -e WG_DEFAULT_DNS=1.1.1.1 \
+  --restart unless-stopped \
+  ghcr.io/wg-easy/wg-easy
+```
+
+- Replace `yourdomain.duckdns.org` with your full DuckDNS domain.
+- `WG_DEFAULT_DNS=1.1.1.1` sets Cloudflare DNS for connected clients. Change this to your preferred DNS server if desired.
+
+Verify the container started successfully:
+
+```bash
+docker logs wireguard
+```
+
+You should see lines confirming the server is listening and the WireGuard configuration was loaded and synced.
+
+#### 4.3 Access the Web UI
+
+Open your browser and navigate to the wg-easy web interface:
+
+```
+http://<your-pi-local-ip>:51821
+```
+
+For example: `http://192.168.1.100:51821`
+
+The web interface shows your current WireGuard clients and provides buttons to add new ones, display QR codes, download configuration files, and enable or disable individual clients.
+
+#### 4.4 Generate Your First Client
+
+1. In the web UI, click the **New Client** button (the **+** icon).
+2. Enter a name for the client (e.g., `iPhone`).
+3. Click **Create**.
+4. A new row appears with the client name and a QR code icon. Click the QR code icon to display the scannable code.
+
+You can also click the download icon to save the `.conf` file as a backup.
+
+### 5. Configure Your Client Device (iPhone / iPad)
+
+1. Install the official **WireGuard** app from the App Store.
+2. Open the app, tap the **+** button, and select **Create from QR code**.
+3. Point your camera at the QR code displayed in the wg-easy web UI.
+4. Give the tunnel a name (e.g., `Home`) and tap **Save**.
+
+> **About Allowed IPs:** By default, wg-easy generates client configurations that route all internet traffic through your home connection (`AllowedIPs = 0.0.0.0/0`). If you prefer a *split tunnel* where only traffic to your media center goes through the VPN (leaving web browsing and streaming on your phone's direct connection), tap the tunnel in the WireGuard app, select **Edit**, and change **Allowed IPs** to `10.8.0.0/24`. Either setting works — pick whichever you prefer.
+
+### 6. Verify the Connection
+
+1. **On your phone:** Turn off Wi-Fi so you are on cellular data only.
+2. Open the WireGuard app and toggle the tunnel **ON**.
+3. Open Safari and navigate to one of your services using the Pi's VPN address (`10.8.0.1`):
+   - Sonarr: `http://10.8.0.1:8989`
+   - Radarr: `http://10.8.0.1:7878`
+   - Lidarr: `http://10.8.0.1:8686`
+   - qBittorrent: `http://10.8.0.1:8080`
+   - Jellyfin: `http://10.8.0.1:8096`
+   - Navidrome: `http://10.8.0.1:4533`
+   - slskd: `http://10.8.0.1:5030`
+
+> **Why `10.8.0.1`?** wg-easy assigns `10.8.0.1` to the WireGuard server (your Raspberry Pi) by default. Docker containers map their ports to all host interfaces, so services are reachable at this VPN address when connected. You can verify the address by running `docker exec wireguard cat /etc/wireguard/wg0.conf` on the Pi.
+
+If the pages load, your WireGuard tunnel is working correctly. You can now manage downloads, add movies and TV shows, and check your media center from anywhere.
+
+> **Troubleshooting:** If pages do not load, verify the container is running with `docker ps`. Check the logs with `docker logs wireguard` for any errors. Confirm your router's UDP port 51820 forwarding rule is active and pointing to the correct Pi IP address.
+
+### 7. Adding Additional Clients
+
+To add another device (an iPad, laptop, or a second phone):
+
+1. Open the wg-easy web UI at `http://<your-pi-local-ip>:51821`.
+2. Click **New Client**, give it a name (e.g., `iPad`), and click **Create**.
+3. Scan the QR code from the web UI with the new device's WireGuard app.
+
+Existing clients continue to work without interruption — each new client is added alongside the existing ones automatically.
 
 
