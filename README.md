@@ -379,6 +379,12 @@ docker run -d \
   --restart unless-stopped \
   deluan/navidrome
 ```
+#### Navidrome Initial Setup
+
+1. Open your browser and navigate to `http://<your-pi-ip>:4533`.
+2. The first time you visit, you'll see a setup screen. Create the admin account by setting a username and password.
+3. After login, Navidrome automatically scans `/music` and begins indexing your library. Album art, artist images, and metadata are fetched automatically from MusicBrainz and Last.fm.
+
 #### **Jellyfin**
 Jellyfin is an open-source media server that streams your movies, TV shows, and music to any device — phones, tablets, laptops, or smart TVs — with optimized playback and hardware transcoding.
 
@@ -448,6 +454,14 @@ docker run -d \
 - Port 5030: Web UI (check status, browse network, search)
 - Port 5031: Soulseek protocol (needed for peer connections — also forward this UDP port on your router for better connectivity)
 - The `shared` directory in the config lets other Soulseek users download from your library (optional — remove the `shared` section if you prefer not to share).
+
+#### slskd Initial Setup
+
+1. Open your browser and navigate to `http://<your-pi-ip>:5030`.
+2. You'll see the slskd dashboard showing connection status, active transfers, and search capabilities.
+3. Check the status indicator at the top. It should show **Connected** in green once your Soulseek credentials are accepted.
+4. If it shows **Disconnected**, verify the username and password in your `slskd.yml` file and restart the container: `docker restart slskd`.
+5. Generate a random API key for Tubifarry by running `openssl rand -hex 16` on your Pi, then copy the output into `slskd.yml` under `web.authentication.api_keys.tubifarry.key` and restart slskd.
 
 #### **Tubifarry (Lidarr Plugin)**  
 Tubifarry is a Lidarr plugin that adds Soulseek as a **native indexer and download client** directly inside Lidarr. Unlike Soularr (which ran as a separate polling container), Tubifarry integrates Soulseek the same way Jackett + qBittorrent work for torrents — when you search for an artist in Lidarr, it queries Soulseek alongside your torrent indexers, and you can pick releases from either source. No extra Docker container, config file, or cron-like polling needed.
@@ -638,27 +652,6 @@ Lidarr uses two download sources in parallel:
 #### Step 5: Save and Exit
 1. After confirming everything works, close the Jackett web UI or leave it running in the background.
 2. Your Jackett configuration is now complete, and it's ready to be linked with Sonarr, Radarr, and Lidarr.
-
----
-
-### slskd
-
-#### Step 1: Access the slskd Web UI
-1. Open your browser and navigate to `http://<your-pi-ip>:5030`. Example: `http://192.168.1.100:5030`.
-2. You'll see the slskd dashboard showing connection status, active transfers, and search capabilities.
-
-#### Step 2: Verify Soulseek Connection
-1. On the slskd dashboard, check the status indicator at the top. It should show **Connected** in green once your credentials are accepted.
-2. If it shows **Disconnected**, verify the username and password in your `slskd.yml` file and restart the container: `docker restart slskd`.
-
-#### Step 3: Create an API Key for Tubifarry
-1. Generate a random API key string by running this on your Pi:
-   ```bash
-   openssl rand -hex 16
-   ```
-2. Copy the output and add it to your `slskd.yml` under `web.authentication.api_keys.tubifarry.key`.
-3. Restart slskd: `docker restart slskd`
-4. Use this key value as the API Key when configuring the Slskd indexer and download client in Lidarr.
 
 ---
 
@@ -929,15 +922,9 @@ Now when you watch something in Kodi, Jellyfin marks it as watched — and vice 
 
 ## Setting Up Navidrome for Music Streaming
 
-Navidrome is a lightweight, self-hosted music server compatible with the Subsonic API, giving you a personal Spotify-like experience. It streams your music library to web browsers and mobile apps with gapless playback, transcoding, and smart playlists. Deployed via Docker above, it's already pointed at your music folder — now it just needs initial setup.
+Navidrome is a lightweight, self-hosted music server compatible with the Subsonic API, giving you a personal Spotify-like experience. It streams your music library to web browsers and mobile apps with gapless playback, transcoding, and smart playlists. The container was deployed in the Docker Containers section above.
 
-### 1. Initial Setup
-
-1. Open your browser and navigate to `http://<your-pi-ip>:4533` (e.g., `http://192.168.1.100:4533`).
-2. The first time you visit, you'll see a setup screen. Create the admin account by setting a username and password.
-3. After login, Navidrome automatically scans `/music` and begins indexing your library. Album art, artist images, and metadata are fetched automatically from MusicBrainz and Last.fm.
-
-### 2. Connect Mobile Apps and Desktop Clients
+### 1. Connect Mobile Apps and Desktop Clients
 
 Navidrome is compatible with any **Subsonic client**. Here are some popular options:
 
@@ -952,7 +939,7 @@ To connect a Subsonic client:
 - **Server:** `http://<your-pi-ip>:4533`
 - **Username / Password:** The admin credentials you created in step 1.
 
-### 3. Access via WireGuard VPN
+### 2. Access via WireGuard VPN
 
 When connected to your WireGuard VPN, stream your music from anywhere:
 - **Web:** `http://10.8.0.1:4533`
