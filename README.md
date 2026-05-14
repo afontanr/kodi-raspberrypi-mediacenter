@@ -217,16 +217,23 @@ To ensure proper organization and functionality for the Docker containers, you n
       ```
 
 ### 3. Explanation of the Directories  
-   - **`docker/config`:** Stores configuration files for all Docker containers, such as settings for qBittorrent, Sonarr, Radarr, Jackett, Jellyfin, and WireGuard.  
-   - **`/storage/external_disk/config/slskd`:** Stores slskd configuration (YAML file and Soulseek credentials).  
+   - **`config/qbittorrent`:** qBittorrent settings (web UI credentials, categories, download preferences).  
+   - **`config/jackett`:** Jackett indexer configurations and API keys.  
+   - **`config/sonarr`:** Sonarr settings (TV show library, download profiles, indexers).  
+   - **`config/radarr`:** Radarr settings (movie library, download profiles, indexers).  
+   - **`config/lidarr`:** Lidarr settings (music library, download profiles, indexers, plugins).  
+   - **`config/navidrome`:** Navidrome music server settings and database.  
+   - **`config/slskd`:** slskd configuration (YAML file and Soulseek credentials).  
+   - **`docker/config/jellyfin`:** Jellyfin media server configuration and database.  
+   - **`docker/config/wg-easy`:** WireGuard client profiles and server keys.  
    - **`downloads`:** Temporary storage for media files downloaded by the containers.  
        - **`movies-radarr`:** For movies downloaded by Radarr.  
        - **`tv-sonarr`:** For TV shows downloaded by Sonarr.  
        - **`music-lidarr`:** For music downloaded by Lidarr.  
-       - **`incomplete`:** For in-progress downloads by slskd (Soulseek).
+       - **`incomplete`:** For in-progress downloads by slskd (Soulseek).  
    - **`media`:** Final destination for organized media files:  
        - **`movies`:** For properly imported and sorted movies.  
-       - **`tv`:** For properly imported and sorted TV shows.
+       - **`tv`:** For properly imported and sorted TV shows.  
        - **`music`:** For properly imported and sorted music (Artist/Album/Track).
 
 ### 4. Set Permissions for the Directories  
