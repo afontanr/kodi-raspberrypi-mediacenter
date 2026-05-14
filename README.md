@@ -104,9 +104,9 @@ To access your Raspberry Pi remotely, you first need to set up SSH (Secure Shell
    - From your computer, open a terminal or command prompt.
    - Use the following SSH command to connect to your Raspberry Pi:
      ```
-     ssh root@<raspberry_pi_ip_address>
+     ssh root@<your-pi-ip>
      ```
-   - Replace `<raspberry_pi_ip_address>` with the actual IP address of the Raspberry Pi.
+   - Replace `<your-pi-ip>` with the actual IP address of the Raspberry Pi.
 
 6. **Enter Password**:
    - When prompted, enter the password you set earlier for SSH access.
@@ -243,7 +243,7 @@ To ensure proper organization and functionality for the Docker containers, you n
 ### 4. Set Permissions for the Directories  
    - Ensure the Docker containers have full access by granting the appropriate permissions:
      ```
-      chmod -R 777 docker downloads media
+      chmod -R 777 config docker downloads media
       chmod g+s downloads
      ```
 
@@ -445,7 +445,7 @@ docker run -d \
   --name slskd \
   --network media-network \
   -p 5030:5030 \
-  -p 5031:5031 \
+  -p 5031:5031/udp \
   -v /storage/external_disk/config/slskd:/app \
   -v /storage/external_disk/media/music:/music:ro \
   -v /storage/external_disk/downloads:/downloads \
@@ -579,7 +579,7 @@ Lidarr now has Soulseek as a fully integrated download source — search results
 
 Lidarr uses two download sources in parallel:
 
-- **Torrents (Jackett + qBittorrent):** Follow the shared instructions in [Connecting Sonarr, Radarr, and Lidarr with qBittorrent and Jackett](#connecting-sonarr-radarr-and-lidarr-with-qbittorrent-and-jackett) below. For Tornab indexers, use category `3000,3010,3020`.
+- **Torrents (Jackett + qBittorrent):** Follow the shared instructions in [Connecting Sonarr, Radarr, and Lidarr with qBittorrent and Jackett](#connecting-sonarr-radarr-and-lidarr-with-qbittorrent-and-jackett) below. For Torznab indexers, use category `3000,3010,3020`.
 - **Soulseek (Tubifarry + slskd):** Already configured in the [Tubifarry](#tubifarry-lidarr-plugin) section above.
 
 ---
@@ -749,9 +749,9 @@ In this section, we will configure Sonarr, Radarr, and Lidarr to connect with qB
 
 3. **Check qBittorrent:**
    - Open qBittorrent and verify that the download appears under the correct category:
-     - **TV-Sonarr**: Downloads TV series.
-     - **Movies-Radarr**: Downloads movies.
-      - **Music-Lidarr**: Downloads music.
+     - **tv-sonarr**: Downloads TV series.
+     - **movies-radarr**: Downloads movies.
+      - **music-lidarr**: Downloads music.
 
 ---
 
