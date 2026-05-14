@@ -185,6 +185,10 @@ Your external hard drive is now mounted and ready for use. You can store your me
 
 ---
 
+## LibreELEC Filesystem Overview
+
+LibreELEC uses a read-only root filesystem. The writable persistent storage is at `/storage` — this is where all configuration files, logs, and user data live. When this guide references paths like `/storage/external_disk/...`, it's because everything must live under `/storage` to survive reboots. Do not store configuration or media on the root filesystem (`/`) — changes there are lost on reboot.
+
 ## Setting Up Directories for Docker Containers
 
 To ensure proper organization and functionality for the Docker containers, you need to create directories for configuration files, downloads, and media storage. This structure keeps everything well-organized and easy to manage.
