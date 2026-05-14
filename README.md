@@ -432,7 +432,7 @@ Tubifarry is a Lidarr plugin that adds Soulseek as a **native indexer and downlo
 
 ##### Install the Plugin
 
-1. Open Lidarr at `http://<your-pi-local-ip>:8686`.
+1. Open Lidarr at `http://<your-pi-ip>:8686`.
 2. Go to **System > Plugins**.
 3. Paste `https://github.com/TypNull/Tubifarry` into the GitHub URL box and click **Install**.
 
@@ -468,7 +468,7 @@ Lidarr now has Soulseek as a fully integrated download source — search results
 ### Sonarr
 
 #### Step 1: Access Sonarr
-1. Open your browser and navigate to the IP address of your Raspberry Pi with the Sonarr port (default: `http://<raspberry_pi_ip>:8989`).
+1. Open your browser and navigate to the IP address of your Raspberry Pi with the Sonarr port (default: `http://<your-pi-ip>:8989`).
    Example: `http://192.168.1.100:8989`.
 
 2. You'll see the Sonarr dashboard. If it’s your first time accessing it, follow the setup wizard or proceed with the manual setup below.
@@ -492,7 +492,7 @@ Lidarr now has Soulseek as a fully integrated download source — search results
 ### Radarr
 
 #### Step 1: Access Radarr
-1. Open your browser and navigate to the IP address of your Raspberry Pi with the Radarr port (default: `http://<raspberry_pi_ip>:7878`).
+1. Open your browser and navigate to the IP address of your Raspberry Pi with the Radarr port (default: `http://<your-pi-ip>:7878`).
    Example: `http://192.168.1.100:7878`.
 
 2. You'll see the Radarr dashboard. If it’s your first time accessing it, follow the setup wizard or proceed with the manual setup below.
@@ -516,7 +516,7 @@ Lidarr now has Soulseek as a fully integrated download source — search results
 ### Lidarr
 
 #### Step 1: Access Lidarr
-1. Open your browser and navigate to the IP address of your Raspberry Pi with the Lidarr port (default: `http://<raspberry_pi_ip>:8686`).
+1. Open your browser and navigate to the IP address of your Raspberry Pi with the Lidarr port (default: `http://<your-pi-ip>:8686`).
    Example: `http://192.168.1.100:8686`.
 
 2. You'll see the Lidarr dashboard. If it's your first time accessing it, follow the setup wizard or proceed with the manual setup below.
@@ -559,7 +559,7 @@ Lidarr uses two download sources in parallel:
    Take note of the password.
 
 #### Step 2: Log in to the qBittorrent Web UI
-1. Open your browser and navigate to the qBittorrent web UI: `http://<raspberry_pi_ip>:8080`. Example: `http://192.168.1.100:8080`.
+1. Open your browser and navigate to the qBittorrent web UI: `http://<your-pi-ip>:8080`. Example: `http://192.168.1.100:8080`.
 2. Log in using:
    - Username: admin
    - Password: The default password retrieved in Step 1.
@@ -593,7 +593,7 @@ Lidarr uses two download sources in parallel:
 
 #### Step 1: Access the Jackett Web UI
 1. Open your browser and navigate to the Jackett web UI:
-   `http://<raspberry_pi_ip>:9117`.
+   `http://<your-pi-ip>:9117`.
    Example: `http://192.168.1.100:9117`.
 2. Once loaded, you should see the Jackett dashboard.
 
@@ -622,7 +622,7 @@ Lidarr uses two download sources in parallel:
 ### slskd
 
 #### Step 1: Access the slskd Web UI
-1. Open your browser and navigate to `http://<raspberry_pi_ip>:5030`. Example: `http://192.168.1.100:5030`.
+1. Open your browser and navigate to `http://<your-pi-ip>:5030`. Example: `http://192.168.1.100:5030`.
 2. You'll see the slskd dashboard showing connection status, active transfers, and search capabilities.
 
 #### Step 2: Verify Soulseek Connection
@@ -662,9 +662,9 @@ In this section, we will configure Sonarr, Radarr, and Lidarr to connect with qB
 ### **1. Adding qBittorrent to Sonarr, Radarr, and Lidarr**
 
 1. **Open Sonarr, Radarr, or Lidarr** in your browser.
-   - Sonarr: `http://<your_raspberry_pi_IP>:8989`
-   - Radarr: `http://<your_raspberry_pi_IP>:7878`
-   - Lidarr: `http://<your_raspberry_pi_IP>:8686`
+   - Sonarr: `http://<your-pi-ip>:8989`
+   - Radarr: `http://<your-pi-ip>:7878`
+   - Lidarr: `http://<your-pi-ip>:8686`
 
 2. **Navigate to the Download Client settings:**
    - In Sonarr, Radarr, or Lidarr, go to **Settings > Download Clients**.
@@ -686,15 +686,15 @@ In this section, we will configure Sonarr, Radarr, and Lidarr to connect with qB
 
 #### **Step 1: Get the Indexer URL and API Key from Jackett**
 1. **Access Jackett:**
-   - Open Jackett in your browser: `http://<your_raspberry_pi_IP>:9117`.
+   - Open Jackett in your browser: `http://<your-pi-ip>:9117`.
 
 2. **Copy the Torznab Feed URL:**
    - Find an indexer you have added in Jackett and click **Copy Torznab Feed**.
    - The copied URL will look like this:
      ```
-     http://<your_raspberry_pi_IP>:9117/api/v2.0/indexers/<indexer_name>/results/torznab/
+     http://<your-pi-ip>:9117/api/v2.0/indexers/<indexer_name>/results/torznab/
      ```
-   - Replace `<your_raspberry_pi_IP>` with `jackett` to take advantage of the Docker network:
+   - Replace `<your-pi-ip>` with `jackett` to take advantage of the Docker network:
      ```
      http://jackett:9117/api/v2.0/indexers/<indexer_name>/results/torznab/
      ```
@@ -871,7 +871,7 @@ docker ps | grep jellyfin
 
 ### 2. Initial Setup
 
-1. Open your browser and navigate to `http://<your-pi-local-ip>:8096` (e.g., `http://192.168.1.100:8096`).
+1. Open your browser and navigate to `http://<your-pi-ip>:8096` (e.g., `http://192.168.1.100:8096`).
 2. The setup wizard appears. Choose your preferred language and click **Next**.
 3. Create an admin account by setting a username and password.
 4. Click **Add Media Library**, then configure your libraries:
@@ -915,7 +915,7 @@ Hardware acceleration offloads video transcoding to the Raspberry Pi 5's GPU, re
 
 | Device | Method |
 |---|---|
-| **Web browser** | `http://<your-pi-local-ip>:8096` |
+| **Web browser** | `http://<your-pi-ip>:8096` |
 | **iPhone / iPad** | Jellyfin app from the [App Store](https://apps.apple.com/app/jellyfin/id1480192618) |
 | **Android** | Jellyfin app from the [Play Store](https://play.google.com/store/apps/details?id=org.jellyfin.mobile) |
 | **Smart TV** | Jellyfin app available on most platforms (LG, Samsung, Android TV, Roku) |
@@ -927,7 +927,7 @@ Install the **Jellyfin for Kodi** add-on to keep watched status and library upda
 
 1. Install the [Jellyfin Kodi repository](https://jellyfin.org/docs/general/clients/kodi/#install) from the Kodi file manager.
 2. Open Kodi, go to **Add-ons** → **Install from repository** → **Jellyfin Repository** → **Video add-ons** → **Jellyfin**.
-3. Follow the prompt to connect to your Jellyfin server at `http://<your-pi-local-ip>:8096`.
+3. Follow the prompt to connect to your Jellyfin server at `http://<your-pi-ip>:8096`.
 4. Choose **Native mode** during setup for the best Kodi integration.
 
 Now when you watch something in Kodi, Jellyfin marks it as watched — and vice versa.
@@ -940,7 +940,7 @@ Navidrome is a lightweight, self-hosted music server compatible with the Subsoni
 
 ### 1. Initial Setup
 
-1. Open your browser and navigate to `http://<your-pi-local-ip>:4533` (e.g., `http://192.168.1.100:4533`).
+1. Open your browser and navigate to `http://<your-pi-ip>:4533` (e.g., `http://192.168.1.100:4533`).
 2. The first time you visit, you'll see a setup screen. Create the admin account by setting a username and password.
 3. After login, Navidrome automatically scans `/music` and begins indexing your library. Album art, artist images, and metadata are fetched automatically from MusicBrainz and Last.fm.
 
@@ -952,11 +952,11 @@ Navidrome is compatible with any **Subsonic client**. Here are some popular opti
 |---|---|
 | **iPhone / iPad** | [play:Sub](https://apps.apple.com/app/playsub-music-streamer/id995329482) or [Substreamer](https://apps.apple.com/app/substreamer/id1012991665) |
 | **Android** | [Symfonium](https://play.google.com/store/apps/details?id=app.symfonik.music.player) (paid) or [Subtracks](https://play.google.com/store/apps/details?id=com.subtrack) (free) |
-| **Desktop (Web)** | `http://<your-pi-local-ip>:4533` |
+| **Desktop (Web)** | `http://<your-pi-ip>:4533` |
 | **Desktop (App)** | [Sonixd](https://github.com/jeffvli/sonixd) or [Feishin](https://github.com/jeffvli/feishin) |
 
 To connect a Subsonic client:
-- **Server:** `http://<your-pi-local-ip>:4533`
+- **Server:** `http://<your-pi-ip>:4533`
 - **Username / Password:** The admin credentials you created in step 1.
 
 ### 3. Access via WireGuard VPN
@@ -997,7 +997,7 @@ To manage Radarr and Sonarr directly from your phone, you can use the **Rudarr**
 
 1. Open the Rudarr app after installation.
 2. Add Radarr and Sonarr by providing the following details:
-   - **URL**: Use the URL of your Radarr and Sonarr instances (e.g., `http://<your-local-ip>:7878` for Radarr, and `http://<your-local-ip>:8989` for Sonarr).
+   - **URL**: Use the URL of your Radarr and Sonarr instances (e.g., `http://<your-pi-ip>:7878` for Radarr, and `http://<your-pi-ip>:8989` for Sonarr).
    - **API Key**: Found in Radarr and Sonarr under:
      - **Settings > General > Security**: Copy the API key.
 
@@ -1121,7 +1121,7 @@ You should see lines confirming the server is listening and the WireGuard config
 Open your browser and navigate to the wg-easy web interface:
 
 ```
-http://<your-pi-local-ip>:51821
+http://<your-pi-ip>:51821
 ```
 
 For example: `http://192.168.1.100:51821`
@@ -1169,7 +1169,7 @@ If the pages load, your WireGuard tunnel is working correctly. You can now manag
 
 To add another device (an iPad, laptop, or a second phone):
 
-1. Open the wg-easy web UI at `http://<your-pi-local-ip>:51821`.
+1. Open the wg-easy web UI at `http://<your-pi-ip>:51821`.
 2. Click **New Client**, give it a name (e.g., `iPad`), and click **Create**.
 3. Scan the QR code from the web UI with the new device's WireGuard app.
 
