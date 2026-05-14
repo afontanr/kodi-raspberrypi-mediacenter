@@ -968,7 +968,30 @@ For convenience:
 
 ---
 
-### **2. Controlling Radarr and Sonarr from Your Mobile**
+### 2. Updating Docker Containers
+
+Container images don't update themselves. To pull the latest image and recreate a container:
+
+```bash
+docker pull linuxserver/qbittorrent && docker stop qbittorrent && docker rm qbittorrent && docker run -d \
+  --name qbittorrent \
+  --network media-network \
+  -p 8080:8080 \
+  -p 8999:8999 \
+  -v /storage/external_disk/config/qbittorrent:/config \
+  -v /storage/external_disk/downloads:/downloads \
+  -e PUID=1000 -e PGID=1000 \
+  --restart unless-stopped \
+  linuxserver/qbittorrent
+```
+
+Repeat the same pattern for each container (jackett, sonarr, radarr, lidarr, navidrome, slskd, jellyfin, wireguard, duckdns) — always `pull`, `stop`, `rm`, then `run` with the same flags from the deployment section. Your configuration volumes are preserved because the `-v` mounts point to the same directories.
+
+> **Tip:** Run `docker system prune -a` every few months to reclaim disk space from old unused images.
+
+---
+
+### **3. Controlling Radarr and Sonarr from Your Mobile**
 
 To manage Radarr and Sonarr directly from your phone, you can use the **Rudarr** app.  
 
@@ -985,6 +1008,12 @@ To manage Radarr and Sonarr directly from your phone, you can use the **Rudarr**
      - **Settings > General > Security**: Copy the API key.
 
 Once configured, Rudarr allows you to search, add, and manage downloads directly from your mobile device, making it a powerful addition to your media automation setup.
+
+---
+
+### 4. Monitor Disk Space
+
+Run `df -h /storage/external_disk` periodically to check remaining space on your external drive. Docker container logs can grow large — check with `docker system df`. If `/storage` fills up, containers will fail to start.
 
 ---
 
